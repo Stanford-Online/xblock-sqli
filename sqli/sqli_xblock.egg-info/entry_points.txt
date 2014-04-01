@@ -1,0 +1,3 @@
+[xblock.v1]
+sqli = sqli:SqlInjectionXBlock
+

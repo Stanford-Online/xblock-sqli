@@ -1,0 +1,9 @@
+/* CSS for SqlInjectionXBlock */
+
+.sqli_block .count {
+    font-weight: bold;
+}
+
+.sqli_block p {
+    cursor: pointer;
+}

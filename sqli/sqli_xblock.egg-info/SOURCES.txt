@@ -1,0 +1,11 @@
+sqli/__init__.py
+sqli/sqli.py
+sqli/static/css/sqli.css
+sqli/static/html/sqli.html
+sqli/static/js/src/sqli.js
+sqli_xblock.egg-info/PKG-INFO
+sqli_xblock.egg-info/SOURCES.txt
+sqli_xblock.egg-info/dependency_links.txt
+sqli_xblock.egg-info/entry_points.txt
+sqli_xblock.egg-info/requires.txt
+sqli_xblock.egg-info/top_level.txt
