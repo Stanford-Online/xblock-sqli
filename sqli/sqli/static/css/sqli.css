@@ -20,3 +20,14 @@
 .tada {
     color: green;
 }
+
+input#sqli_username {
+    width:150px;
+}
+
+input#sqli_password {
+    width:350px;
+}
+.user_score {
+    display: none;
+}

@@ -1,16 +1,25 @@
-<div class="sqli_block" data-done="{self.done}">
+<div class="sqli_block">
+  <div class="user_score">
+  <b>Your current score on this question is <span class="problem_score">{self.student_score}</span> /
+    <span class="problem_weight">{self.weight}</span></b>
+  </div>
   <div class="login_failure">Your username/password combination was not in our db.  Please try again!</div>
   <div class="login_screen">
-    <p>Welcome to the SQL-Injection Capture-the-Flag exercises</p>
+    <h2>Welcome to the SQL-Injection Capture-the-Flag exercises</h2>
     <p>In this problem, you will try to login as user "bob" using SQL injection, without knowing
     his password.  Bob is actually quite security savvy, so his password is a 64 character random
-    alphanumeric string, so brute-force guessing is probably not the way to solve this problem.
-    FYI: the database backing this exercise is SQLite.</p>
+    alphanumeric string.  Brute-force guessing is not the way to solve this problem.</p>
       <label for="sqli_username">Username:</label><input id="sqli_username" name="sqli_username" type="text" value="{self.student_answer_username}"/>
       <label for="sqli_password">Password:</label><input id="sqli_password" name="sqli_password" type="text" value="{self.student_answer_password}"/>
       <button id="sqli_submit">Submit</button>
   </div>
   <div class="welcome">
     Welcome <span id="logged-in-username"></span>, your email address is <span id="logged-in-email"></span>
+    <div class="victory"></div>
+  </div>
+  <div class="attempts"><p>You've made <span class="attempt_no"></span> attempts on this problem.</p></div>
+  <div class="previous_answers">
+    <p>Previous Student Answers</p>
+    <ul class="previous_answer_list"></ul>
   </div>
 </div>

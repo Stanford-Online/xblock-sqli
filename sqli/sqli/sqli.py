@@ -1,7 +1,8 @@
 """TO-DO: Write a description of what this XBlock is."""
-
+from django.template import Template, Context
 import pkg_resources
 import sqlite3
+import json
 from cgi import escape
 from .lms_mixin import LmsCompatibilityMixin
 from xblock.core import XBlock
@@ -25,10 +26,10 @@ class SqlInjectionXBlock(LmsCompatibilityMixin, XBlock):
             'log': 'previous_answers_login',
         },
         'union': {
-            'html': "",
-            'css': [],
+            'html': "static/html/union.html",
+            'css': ["static/css/sqli.css"],
             'js': [],
-            'js_objs': ['SqlInjectionXBlock'],
+            'js_objs': [],
             'log': 'previous_answers_union',
         },
     }
@@ -49,6 +50,12 @@ class SqlInjectionXBlock(LmsCompatibilityMixin, XBlock):
         default=False,
         scope=Scope.user_state,
         help="Is student done with this problem"
+    )
+
+    student_attempts = Integer(
+        default=0,
+        scope=Scope.user_state,
+        help="Number of attempts the student has made"
     )
 
     previous_answers_login = List(
@@ -102,23 +109,19 @@ class SqlInjectionXBlock(LmsCompatibilityMixin, XBlock):
             return frag
 
         problem_resources = self.AVAILABLE_PROBLEMS[self.problem_id]
-
         html = self.resource_string(problem_resources['html'])
-
-        if self.student_score is not None:
-            score_html = self.resource_string("static/html/score.html")
-            frag = Fragment(score_html.format(self=self))
-            frag.add_content(html.format(self=self))
-        else:
-            frag = Fragment(html.format(self=self))
-        frag.add_content(u"<p>Previous answers, by all students</p><ul>")
-        for item in getattr(self, problem_resources['log']):
-            frag.add_content(u"<li>{}</li>".format(unicode(escape(item, quote=True))))
-        frag.add_content(u"</ul>")
+        frag = Fragment(html.format(self=self))
         for css_file in problem_resources['css']:
             frag.add_css(self.resource_string(css_file))
         for js_file in problem_resources['js']:
-            frag.add_javascript(self.resource_string(js_file))
+            js_str = Template(self.resource_string(js_file)).render(
+                Context({
+                    'prev_answers_json': json.dumps(getattr(self, problem_resources['log'])),
+                    'problem_score': self.student_score,
+                    'problem_weight': self.weight,
+                    'attempts': self.student_attempts,
+                }))
+            frag.add_javascript(js_str)
         for js_obj in problem_resources['js_objs']:
             frag.initialize_js(js_obj)
         return frag
@@ -128,37 +131,51 @@ class SqlInjectionXBlock(LmsCompatibilityMixin, XBlock):
         db_conn = sqlite3.connect(pkg_resources.resource_filename(__name__, "static/dat/sqli.sqlite3"))
         db_conn.row_factory = sqlite3.Row
         cursor = db_conn.cursor()
+        self.student_attempts += 1
         username = data['username']
         password = data['password']
         self.student_answer_username = username
         self.student_answer_password = password
-        self.previous_answers_login.append("username: {} ||| password: {}".format(username, password))
+        student_id = self.runtime.user_id if self.runtime.user_id is not None else self.scope_ids.user_id
+        answer_string = "student_id: {} ||| username: {} ||| password: {}".format(
+            student_id, username, password)
+        self.previous_answers_login.append(answer_string)
 
         # NEVER, NEVER, NEVER do this yourself.  It's dangerous generate sql queries with string concatentation,
         # which is the point of this whole exercise
         sql_string = "SELECT * from users where username='{}' and password='{}'".format(username, password)
-        result_user = cursor.execute(sql_string).fetchone()
-        if result_user:
-            if result_user['username'] == 'bob':
-                self.done = True
-                self.student_score = 1.0
-                self.runtime.publish(
-                    self,
-                    'grade',
-                    {
-                        'value': 1.0,
-                        'max_value': 1.0,
-                    }
-                )
-            return {
-                'success': True,
-                'username': result_user['username'],
-                'email': result_user['email'],
-            }
+        try:
+            result_user = cursor.execute(sql_string).fetchone()
+            if result_user:
+                if result_user['username'] == 'bob':
+                    self.done = True
+                    self.student_score = 1.0
+                    self.runtime.publish(
+                        self,
+                        'grade',
+                        {
+                            'value': 1.0,
+                            'max_value': 1.0,
+                        }
+                    )
+                return {
+                    'success': True,
+                    'username': result_user['username'],
+                    'email': result_user['email'],
+                    'prev_answer': answer_string,
+                    'attempts': self.student_attempts,
+                    'student_score': "{:0.1f}".format(self.student_score) if self.student_score is not None else "None",
+                }
+        except (sqlite3.Error, sqlite3.Warning):
+            pass
+
         return {
             'success': False,
             'username': None,
             'email': None,
+            'prev_answer': answer_string,
+            'attempts': self.student_attempts,
+            'student_score': "{:0.1f}".format(self.student_score) if self.student_score is not None else "None",
         }
 
     def studio_view(self, context=None):
@@ -171,7 +188,6 @@ class SqlInjectionXBlock(LmsCompatibilityMixin, XBlock):
     @XBlock.json_handler
     def change_problem(self, data, suffix=''):
         if 'problem_id' in data:
-            print("RUNNING")
             self.problem_id = data['problem_id']
 
 
@@ -184,6 +200,7 @@ class SqlInjectionXBlock(LmsCompatibilityMixin, XBlock):
             ("SqlInjectionXBlock",
              """<vertical_demo>
                 <sqli problem_id="login"/>
+                <sqli problem_id="union"/>
                 </vertical_demo>
              """),
         ]
