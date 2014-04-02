@@ -1,7 +1,9 @@
 sqli/__init__.py
 sqli/sqli.py
 sqli/static/css/sqli.css
+sqli/static/html/login.html
 sqli/static/html/sqli.html
+sqli/static/html/union.html
 sqli/static/js/src/sqli.js
 sqli_xblock.egg-info/PKG-INFO
 sqli_xblock.egg-info/SOURCES.txt

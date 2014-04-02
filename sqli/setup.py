@@ -16,7 +16,7 @@ def package_data(pkg, root):
 
 setup(
     name='sqli-xblock',
-    version='0.1',
+    version='0.11',
     description='sqli XBlock',   # TODO: write a better description.
     packages=[
         'sqli',

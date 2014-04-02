@@ -7,3 +7,16 @@
 .sqli_block p {
     cursor: pointer;
 }
+
+.sqli_block .welcome{
+    display: none;
+}
+
+.sqli_block .login_failure{
+    display: none;
+    color: red;
+}
+
+.tada {
+    color: green;
+}
